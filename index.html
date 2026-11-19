@@ -1,0 +1,1398 @@
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Strength Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg:#E8EBE6; --surface:#FBFCFA; --ink:#1B2420; --muted:#6E7A73;
+    --hair:#CBD2CA; --fresh:#2E6F5E; --aging:#A8842C; --stale:#7D2E3C;
+    color-scheme: light; box-sizing:border-box;
+    padding-top: env(safe-area-inset-top,0px);
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; min-width:0; }
+  html { -webkit-text-size-adjust:100%; overflow-x:hidden; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:15px; line-height:1.45; overflow-x:hidden; max-width:100%;
+    padding-bottom:calc(60px + env(safe-area-inset-bottom,0px)); }
+  .wrap { max-width:680px; margin:0 auto; padding:0 13px; }
+  /* iOS zooms the page when a focused field is under 16px — that is what causes sideways drift */
+  input, select, textarea, button { font-size:16px; max-width:100%; }
+  input, select, textarea { -webkit-appearance:none; appearance:none; }
+  select { background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),
+    linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+    background-position:calc(100% - 15px) 50%, calc(100% - 10px) 50%;
+    background-size:5px 5px, 5px 5px; background-repeat:no-repeat; padding-right:30px; }
+  body::before { content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); background:var(--bg); z-index:30; }
+
+  header { padding:12px 0 8px; border-bottom:2px solid var(--ink); display:flex;
+    align-items:baseline; justify-content:space-between; gap:10px; }
+  h1 { font-family:'Barlow Condensed','Arial Narrow',sans-serif; font-weight:700;
+    font-size:25px; letter-spacing:.02em; text-transform:uppercase; margin:0; line-height:1; }
+  .datestamp { font-family:'Barlow Condensed',sans-serif; font-size:12px;
+    letter-spacing:.13em; text-transform:uppercase; color:var(--muted); }
+  .syncchip { font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--muted); margin-top:2px; }
+  .syncbox { background:var(--surface); border:1px solid var(--hair); border-radius:3px;
+    padding:9px 11px; margin:0 0 10px; font-size:13px; }
+  .syncbox b { font-family:'Barlow Condensed',sans-serif; font-size:10.5px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted); margin-right:7px; }
+  .helptext { font-size:12px; color:var(--muted); margin:0 0 11px; line-height:1.5; }
+  .helptext code { font-family:ui-monospace,Menlo,monospace; font-size:11.5px;
+    background:#E4E9E2; padding:1px 4px; border-radius:2px; }
+
+  nav { display:flex; border-bottom:1px solid var(--hair); background:var(--bg);
+    position:sticky; top:env(safe-area-inset-top,0px); z-index:20; }
+  nav button { flex:1; appearance:none; background:none; border:none; border-bottom:2px solid transparent;
+    padding:11px 1px 9px; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600;
+    letter-spacing:.09em; text-transform:uppercase; color:var(--muted); cursor:pointer; }
+  nav button[aria-selected="true"] { color:var(--ink); border-bottom-color:var(--ink); }
+
+  /* ---------- filters ---------- */
+  .filters { margin:11px 0 2px; }
+  .fgrid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .fgrid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .filters input[type=search] {
+    width:100%; max-width:100%; font:inherit; font-size:16px; padding:9px 10px;
+    border:1px solid var(--hair); border-radius:2px; background:#fff; color:var(--ink); margin:0 0 5px; }
+  .addbtn { width:100%; appearance:none; background:var(--ink); color:var(--surface); border:none;
+    border-radius:2px; padding:11px; font-family:'Barlow Condensed',sans-serif; font-size:14px;
+    font-weight:600; letter-spacing:.13em; text-transform:uppercase; cursor:pointer; margin:0 0 5px; }
+  .filterbtn { width:100%; appearance:none; background:#fff; border:1px solid var(--hair);
+    border-radius:2px; padding:8px 11px; cursor:pointer; display:flex; align-items:center;
+    justify-content:space-between; gap:10px; font:inherit; color:inherit; text-align:left;
+    margin:0 0 3px; min-height:40px; }
+  .filterbtn .fl { font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted); flex-shrink:0; }
+  .filterbtn .fv { font-size:14px; font-weight:500; text-align:right; min-width:0;
+    overflow-wrap:anywhere; }
+  .filterbtn.on { border-color:var(--ink); }
+  .clearf { appearance:none; background:none; border:none; color:var(--muted); cursor:pointer;
+    font-family:'Barlow Condensed',sans-serif; font-size:11.5px; letter-spacing:.12em;
+    text-transform:uppercase; padding:3px 0 5px; }
+
+  /* ---------- history ---------- */
+  .day { border-bottom:1px solid var(--hair); padding:8px 0 6px; }
+  .day h3 { font-family:'Barlow Condensed',sans-serif; font-size:12.5px; font-weight:700;
+    letter-spacing:.13em; text-transform:uppercase; margin:0 0 4px; }
+  .day .count { color:var(--muted); font-weight:500; }
+  .hitem { display:flex; align-items:center; justify-content:space-between; gap:8px;
+    background:var(--surface); border:1px solid var(--hair); border-radius:3px;
+    padding:5px 9px; margin-bottom:3px; width:100%; text-align:left; font:inherit;
+    color:inherit; appearance:none; cursor:pointer; min-height:30px; border-left-width:3px; }
+  .hitem:active { background:#EAEFE9; }
+  .hitem > span:first-child { min-width:0; overflow-wrap:anywhere; }
+  .hitem .hn { font-size:13.5px; font-weight:500; }
+  .hitem .hd { font-size:11.5px; color:var(--muted); margin-left:7px; }
+  .hitem .hc { font-size:15px; color:var(--hair); flex-shrink:0; line-height:1; }
+  .evt { display:block; width:100%; text-align:left; appearance:none; cursor:pointer;
+    background:#F6EFE8; border:none; border-left:3px solid var(--stale); padding:6px 9px;
+    margin:3px 0 4px; border-radius:0 3px 3px 0; font:inherit; font-size:13px; color:inherit; }
+  .evt b { font-weight:600; }
+  .evt span { font-size:11.5px; color:var(--muted); margin-left:7px; }
+
+  /* ---------- log grids ---------- */
+  .back { appearance:none; background:none; border:none; padding:13px 0 1px; cursor:pointer;
+    font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:600;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+  .region { display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+    margin:14px 0 8px; padding-bottom:4px; border-bottom:2px solid var(--ink); }
+  .region h2 { font-family:'Barlow Condensed',sans-serif; font-size:19px; font-weight:700;
+    letter-spacing:.1em; text-transform:uppercase; margin:0; }
+  .muscle { display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin:13px 0 5px; }
+  .muscle h3 { font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:600;
+    letter-spacing:.18em; text-transform:uppercase; margin:0; color:var(--muted); }
+  .rollup { font-family:'Barlow Condensed',sans-serif; font-size:12.5px; font-weight:600;
+    letter-spacing:.09em; text-transform:uppercase; white-space:nowrap; }
+  .rollup.big { font-size:14px; }
+
+  .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:5px; width:100%; }
+  .cell { appearance:none; background:var(--surface); border:1px solid var(--hair); border-radius:3px;
+    padding:6px 8px; text-align:left; font:inherit; color:inherit; cursor:pointer; width:100%;
+    display:flex; flex-direction:column; justify-content:center; min-height:40px;
+    overflow:hidden; overflow-wrap:anywhere; }
+  .cell:active { background:#EAEFE9; }
+  .cell.done { border-color:var(--fresh); background:#F0F6F3; }
+  .cell .n { font-size:13px; font-weight:500; line-height:1.2; }
+  .cell .d { font-family:'Barlow Condensed',sans-serif; font-size:10.5px; letter-spacing:.06em;
+    text-transform:uppercase; margin-top:1px; }
+  .cell.pinned { border-color:var(--ink); }
+  .pinmark { color:var(--ink); font-size:11px; margin-right:3px; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px;
+    vertical-align:1px; flex-shrink:0; }
+  .swatches { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .sw { width:36px; height:32px; border-radius:3px; border:2px solid transparent;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.12); cursor:pointer; appearance:none; padding:0; }
+  .sw.on { border-color:var(--ink); }
+  .pinhead { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600;
+    letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin:9px 0 4px; }
+  .pinhead:first-child { margin-top:0; }
+  .pinbtn { appearance:none; background:none; border:1px solid var(--hair); border-radius:2px;
+    padding:6px 9px; font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:600;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--muted); cursor:pointer;
+    flex-shrink:0; white-space:nowrap; }
+  .pinbtn.on { background:var(--ink); color:var(--surface); border-color:var(--ink); }
+  .cell.grp { min-height:44px; border-left-width:4px; }
+  .cell.tinted { border-left-width:3px; }
+  .cell.sub { min-height:38px; background:#F2F5F1; }
+  .cell.sub .n { font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:700;
+    letter-spacing:.11em; text-transform:uppercase; }
+  .cell.grp .n { font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:700;
+    letter-spacing:.07em; text-transform:uppercase; }
+  .cell.wide { grid-column:1 / -1; }
+  .noex { font-size:12.5px; color:var(--muted); font-style:italic; padding:2px 0 6px; }
+  .todaybar { background:#F0F6F3; border:1px solid var(--fresh); border-radius:3px;
+    padding:9px 11px; margin:13px 0 11px; font-size:13px; }
+  .todaybar b { display:block; font-family:'Barlow Condensed',sans-serif; font-size:11.5px;
+    letter-spacing:.15em; text-transform:uppercase; color:var(--fresh); margin-bottom:2px; }
+
+  /* ---------- coverage ---------- */
+  .cov { padding:9px 0 7px; border-bottom:1px solid var(--hair); }
+  .covtop { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+  .covname { font-family:'Barlow Condensed',sans-serif; font-size:15.5px; font-weight:600;
+    letter-spacing:.06em; text-transform:uppercase; }
+  .covregion { font-family:'Barlow Condensed',sans-serif; font-size:10.5px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted); }
+  .track { height:6px; background:#DCE1DA; border-radius:1px; margin-top:7px; overflow:hidden; }
+  .track i { display:block; height:100%; }
+  .covsub { font-size:11.5px; color:var(--muted); margin-top:4px; }
+  .days { font-family:'Barlow Condensed',sans-serif; font-size:23px; font-weight:700; line-height:1;
+    white-space:nowrap; flex-shrink:0; }
+  .days small { font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
+  .days.word { font-size:13px; letter-spacing:.1em; text-transform:uppercase; font-weight:600; }
+
+  /* ---------- modal ---------- */
+  .overlay { position:fixed; inset:0; height:100vh; height:100dvh;
+    background:rgba(27,36,32,.5); z-index:60;
+    display:flex; align-items:flex-end; justify-content:center; }
+  .sheet { background:var(--surface); width:100%; max-width:680px;
+    max-height:92vh; max-height:92dvh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    overflow-x:hidden; border-radius:11px 11px 0 0;
+    padding:12px 14px calc(10px + env(safe-area-inset-bottom,0px)); }
+  .sheethead > div { min-width:0; overflow-wrap:anywhere; }
+  .sheethead { display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+    margin:0 0 11px; padding-bottom:8px; border-bottom:1px solid var(--hair); }
+  .sheethead h4 { font-family:'Barlow Condensed',sans-serif; font-size:19px; font-weight:700;
+    letter-spacing:.06em; text-transform:uppercase; margin:0; }
+  .sheethead .sub { font-size:11.5px; color:var(--muted); font-family:'Barlow Condensed',sans-serif;
+    letter-spacing:.12em; text-transform:uppercase; }
+  .pk { font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:.15em;
+    text-transform:uppercase; color:var(--muted); margin:0 0 4px; }
+  .pills { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:9px; max-width:100%; }
+  .pill { appearance:none; background:#fff; border:1px solid var(--hair); border-radius:2px;
+    padding:7px 9px; font:inherit; font-size:15px; color:var(--ink); cursor:pointer;
+    min-width:40px; flex:0 0 auto; line-height:1.25; }
+  .pill.on { background:var(--ink); color:var(--surface); border-color:var(--ink); }
+  .num { width:78px; flex:0 0 auto; font:inherit; font-size:16px; padding:8px;
+    border:1px solid var(--hair); border-radius:2px; background:#fff; }
+  .sheet input[type=text], .sheet input[type=date], .sheet input[type=search],
+  .sheet input[type=number], .sheet select {
+    width:100%; max-width:100%; font:inherit; font-size:16px; padding:10px;
+    border:1px solid var(--hair); border-radius:2px; background:#fff; color:var(--ink); margin:0 0 9px; }
+  .sheet input[type=date] { min-height:42px; }
+  /* must outrank the .sheet input[type=number] rule above, or these become full-width rows */
+  .sheet input.num { width:84px; max-width:84px; flex:0 0 auto; padding:8px; margin:0; }
+  .sheet .pk { margin:0 0 4px; }
+  .pkrow { display:flex; align-items:center; justify-content:space-between; gap:6px; margin:0 0 5px; }
+  .pkrow .pk { margin:0; flex-shrink:0; }
+  .pkctl { display:flex; align-items:center; gap:4px; min-width:0; }
+  .pill.sm { padding:5px 7px; font-size:13px; min-width:32px; }
+  .sheet input.num.sm { width:60px; max-width:60px; padding:6px 7px; }
+  .sheet .pills { margin-bottom:8px; gap:4px; }
+  .pill sup { font-size:9.5px; font-weight:600; margin-left:2px; vertical-align:super; opacity:.75; }
+  .seqline { background:#F0F6F3; border:1px solid var(--fresh); border-radius:2px;
+    padding:7px 9px; margin:0 0 8px; font-size:13.5px; color:var(--ink); overflow-wrap:anywhere; }
+  .seqline.none { background:#F2F5F1; border-color:var(--hair); color:var(--muted); }
+  .seqline b { font-family:'Barlow Condensed',sans-serif; font-size:10.5px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted); margin-right:7px; }
+  .sheet input[type=date] { margin-bottom:9px; }
+  .sheethead { margin-bottom:9px; padding-bottom:7px; }
+  .btnrow { display:flex; gap:6px; margin-top:4px; }
+  /* keep Save/Cancel/Delete pinned to the bottom of the sheet, never scrolled off */
+  .btnrow.stick { position:sticky; bottom:0; z-index:2; background:var(--surface);
+    margin:10px -14px calc(-10px - env(safe-area-inset-bottom,0px));
+    padding:9px 14px calc(9px + env(safe-area-inset-bottom,0px));
+    border-top:1px solid var(--hair); }
+  .btn { appearance:none; flex:1; background:var(--ink); color:var(--surface); border:none; border-radius:2px;
+    padding:12px 6px; font-family:'Barlow Condensed',sans-serif; font-size:13.5px; font-weight:600;
+    letter-spacing:.11em; text-transform:uppercase; cursor:pointer; }
+  .btn.ghost { background:none; color:var(--muted); border:1px solid var(--hair); }
+  .btn.danger { background:none; color:var(--stale); border:1px solid var(--stale); }
+  .picklist { max-height:60vh; max-height:60dvh; overflow-y:auto; margin-bottom:9px; }
+  .picklist .muscle { margin:9px 0 4px; }
+  .picklist .grid { margin-bottom:2px; }
+
+  /* ---------- edit tab ---------- */
+  .editrow { display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--surface); border:1px solid var(--hair); border-radius:3px;
+    padding:10px 12px; margin-bottom:4px; cursor:pointer; min-height:44px; }
+  .panel { background:#F2F5F1; border:1px solid var(--hair); border-top:none;
+    border-radius:0 0 3px 3px; padding:12px; margin:-5px 0 9px; }
+  .chev { color:var(--muted); font-size:11.5px; font-family:'Barlow Condensed',sans-serif;
+    letter-spacing:.1em; text-transform:uppercase; }
+  .sectionhead { font-family:'Barlow Condensed',sans-serif; font-size:17px; font-weight:700;
+    letter-spacing:.12em; text-transform:uppercase; margin:22px 0 4px; padding-bottom:4px;
+    border-bottom:2px solid var(--ink); }
+  .subhead { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600;
+    letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin:13px 0 5px; }
+  label { display:block; font-family:'Barlow Condensed',sans-serif; font-size:11px;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin:0 0 4px; }
+  .panel input, .panel select, .add input, .add select, .add textarea {
+    width:100%; max-width:100%; font:inherit; font-size:16px; padding:10px; border:1px solid var(--hair);
+    border-radius:2px; background:#fff; color:var(--ink); margin-bottom:10px; }
+  .editrow > span { min-width:0; overflow-wrap:anywhere; }
+  .add textarea { min-height:84px; font-size:12px; font-family:ui-monospace,Menlo,monospace; }
+  .checks { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px; }
+  .chk { display:flex; align-items:center; gap:5px; font-size:12.5px; background:#fff;
+    border:1px solid var(--hair); border-radius:2px; padding:5px 7px; cursor:pointer; }
+  .chk input { margin:0; width:auto; }
+  .add { background:var(--surface); border:1px dashed var(--hair); border-radius:3px;
+    padding:12px; margin:9px 0 4px; }
+  .empty { padding:34px 0; color:var(--muted); text-align:center; }
+  .note { font-size:12px; color:var(--muted); margin:13px 0 0; }
+  .warn { background:#F6EFE8; border:1px solid var(--stale); color:var(--stale);
+    padding:9px 11px; border-radius:3px; font-size:13px; margin:11px 0; }
+</style>
+
+<div class="wrap"><header><h1>Strength Log</h1>
+  <div style="text-align:right;min-width:0">
+    <div class="datestamp" id="stamp">&nbsp;</div>
+    <div class="syncchip" id="syncchip"></div>
+  </div></header></div>
+
+<nav role="tablist">
+  <button role="tab" id="tab-hist" aria-selected="true"  onclick="setView('hist')">History</button>
+  <button role="tab" id="tab-edit" aria-selected="false" onclick="setView('edit')">Edit</button>
+</nav>
+
+<div class="wrap"><div id="app"><div class="empty">Loading…</div></div></div>
+<div id="modal"></div>
+
+<script>
+const KEY = 'strength-log-v5';
+
+/* ======================= SEED ======================= */
+const SEED_REGIONS = [
+  ['r-chest','Chest'],['r-sh','Shoulders'],['r-back','Upper back'],
+  ['r-core','Core'],['r-arms','Arms'],['r-legs','Legs'],['r-act','Cardio & activity']
+];
+const SEED_MUSCLES = [
+  ['chest-up','Upper chest','r-chest'],['chest-mid','Middle chest','r-chest'],['chest-low','Lower chest','r-chest'],
+  ['delt-front','Front delts','r-sh'],['delt-side','Side delts','r-sh'],['delt-rear','Rear delts','r-sh'],
+  ['lats','Lats','r-back'],['midback','Mid-back','r-back'],['traps','Traps','r-back'],
+  ['antiext','Anti-extension','r-core'],['antirot','Anti-rotation','r-core'],['erectors','Erectors','r-core'],
+  ['biceps','Biceps','r-arms'],['triceps','Triceps','r-arms'],['forearms','Forearms','r-arms'],
+  ['quads','Quads','r-legs'],['hams','Hamstrings','r-legs'],['glutes','Glutes','r-legs'],
+  ['abductors','Abductors','r-legs'],['adductors','Adductors','r-legs'],['calves','Calves','r-legs'],
+  ['m-bike','Bike','r-act'],['m-run','Running','r-act'],['m-machine','Other machines','r-act'],
+  ['m-sport','Sport','r-act'],['m-rehab','Rehab','r-act']
+];
+const SEED_EXERCISES = [
+  ['bench','Bench press',['chest-mid','delt-front','triceps']],
+  ['incline','Incline press',['chest-up','delt-front','triceps']],
+  ['chestpress','Chest press (machine/cable)',['chest-mid','delt-front','triceps']],
+  ['pecdeck','Pec deck / flies',['chest-mid']],
+  ['milpress','Military press',['delt-front','triceps']],
+  ['latraise','Lateral raises',['delt-side']],
+  ['facepull','Face pulls',['delt-rear','midback']],
+  ['revpecdeck','Reverse pec deck',['delt-rear']],
+  ['ytraise','YT raises',['delt-rear','traps']],
+  ['latpull','Lat pull-downs',['lats','biceps']],
+  ['sapulldown','Straight-arm pulldown',['lats']],
+  ['rows','Seated rows',['midback','lats','biceps']],
+  ['dbrow','Dumbbell row',['midback','lats','biceps']],
+  ['incdbrow','Incline dumbbell row',['midback','lats','biceps']],
+  ['shrug','Shrugs',['traps']],
+  ['pullup','Pull-ups',['lats','biceps']],
+  ['abs','Abs',['antiext']],
+  ['legraise','Straight leg raises',['antiext']],
+  ['birddog','Bird dog',['antiext']],
+  ['deadbug','Dead bug',['antiext']],
+  ['pallof','Pallof press',['antirot']],
+  ['curls','Bicep curls',['biceps']],
+  ['pushdown','Tricep pulldown',['triceps']],
+  ['skull','Skull crushers',['triceps']],
+  ['squat','Squats',['quads','glutes','erectors']],
+  ['legpress','Leg press',['quads','glutes']],
+  ['legext','Leg extension',['quads']],
+  ['hamcurl','Hamstring curls',['hams']],
+  ['hexdl','Hex bar deadlift',['glutes','hams','erectors','quads','traps']],
+  ['hipthrust','Hip thrusts',['glutes']],
+  ['pullthrough','Cable pull-through',['glutes','hams']],
+  ['kickback','Cable glute kickback',['glutes']],
+  ['adduct','Adductors',['adductors']],
+  ['abduct','Abductors',['abductors','glutes']],
+  ['calf','Calf raises',['calves']],
+  ['peloton','Peloton',['m-bike'],'cardio'],
+  ['bike','Exercise bike',['m-bike'],'cardio'],
+  ['crosstrainer','Cross trainer',['m-machine'],'cardio'],
+  ['run','Run / jog',['m-run'],'cardio'],
+  ['hoops','Basketball',['m-sport'],'cardio'],
+  ['hopping','Hopping (ankle physio)',['m-rehab'],'cardio']
+];
+
+const HISTORY = `
+2026-02-26|peloton:o=246~c=334
+2026-03-07|peloton:o=245~c=332
+2026-03-09|peloton:c=326
+2026-03-14|peloton:o=214~c=290
+2026-03-21|peloton:o=230~c=312
+2026-03-31|peloton:o=233~c=316
+2026-04-03|peloton:o=215~c=292
+2026-04-10|peloton:o=242~c=328
+2026-04-17|peloton:o=229~c=310
+2026-04-23|peloton:o=252~c=342
+2026-04-28|peloton:o=232~c=315
+2026-05-05|peloton:o=229~c=311
+2026-05-08|peloton:o=258~c=350
+2026-05-09|incline,abs,ytraise,dbrow
+2026-05-11|milpress,skull,curls,latraise,peloton:o=244~c=330
+2026-05-12|bench,legext,pecdeck,hamcurl,abduct,adduct,facepull
+2026-05-14|abs,peloton:o=264~c=357
+2026-05-15|milpress,rows,incline
+2026-05-16|peloton:m=30
+2026-05-18|abs,latraise,pushdown,curls
+2026-05-19|bench,legext,abduct,adduct,pecdeck,facepull
+2026-05-22|abs,peloton:o=247~c=335
+2026-05-23|incline,dbrow,peloton:o=229~c=310
+2026-05-25|abs,peloton:m=5
+2026-05-26|bench,legext,pecdeck,abduct,adduct,facepull
+2026-05-29|abs,legext,abduct,hamcurl
+2026-06-02|bench,rows,pecdeck,facepull
+2026-06-05|peloton:o=258~c=349
+2026-06-06|abs,incline,skull,latraise,curls
+2026-06-07|peloton:o=247~c=335
+2026-06-10|legext,adduct,hamcurl,rows,pushdown
+2026-06-11|abs,peloton:o=266~c=360
+2026-06-12|peloton:o=267~c=361
+2026-06-15|chestpress,adduct,abduct,legext,hamcurl,pushdown,rows
+2026-06-16|peloton:o=269~c=364
+2026-06-18|milpress,pushdown,curls,pecdeck
+2026-06-22|peloton:o=267~c=362
+2026-06-26|bench,legext,milpress,adduct,latraise:n=light,hamcurl,rows
+2026-06-27|abs,peloton:o=253~c=343
+2026-06-28|incline,pecdeck,latpull,pushdown,facepull:n=light,curls
+2026-06-29|peloton:o=269~c=364
+2026-07-01|chestpress,legext,milpress,facepull,adduct,rows
+2026-07-02|peloton:o=243~c=329
+2026-07-06|peloton:o=269~c=364
+2026-07-07|peloton:c=366
+2026-07-08|chestpress,rows,milpress,facepull
+2026-07-11|incline:n=light,curls,pushdown,latraise,dbrow
+2026-07-13|legext,adduct,hamcurl,latpull
+2026-07-15|abs,peloton:c=371
+2026-07-16|chestpress,rows,milpress,facepull,pecdeck
+2026-07-18|pushdown,pullup
+2026-07-19|bike:m=20,chestpress,curls,latraise,facepull
+2026-07-23|milpress,rows,bike:m=20
+2026-07-24|abs
+2026-07-26|chestpress,latraise,crosstrainer:m=10
+2026-07-27|peloton:c=366
+2026-08-01|latpull,sapulldown,rows,curls,pushdown
+2026-08-02|chestpress,legpress,milpress,adduct,abduct,latraise,facepull
+2026-08-08|bench:s=@60,chestpress,legpress,pecdeck,calf,milpress,rows
+2026-08-09|peloton:m=20
+2026-08-12|latraise:s=@6,skull,facepull,sapulldown,hamcurl,curls
+2026-08-15|bench:s=@60,curls,legpress,latpull,pecdeck,abs
+2026-08-16|milpress,pushdown,facepull,adduct,abduct,chestpress,rows
+2026-08-19|incline,latraise,legraise,hamcurl,abs
+2026-08-22|calf,skull,curls,peloton:c=361
+2026-08-23|chestpress,rows,milpress,adduct,abduct,facepull
+2026-08-29|curls,pushdown,latraise,run
+2026-08-30|bench:s=@70~n=narrow grip,rows,milpress,pullthrough,kickback,facepull
+2026-08-31|run
+2026-09-02|run,sapulldown
+2026-09-06|hoops,abs:n=glutes?
+2026-09-07|run
+2026-09-08|hopping
+2026-09-10|bench,facepull,run
+2026-09-12|hoops
+2026-09-13|milpress,hexdl:s=3x12@45,rows,calf,pecdeck
+2026-09-14|run
+2026-09-16|hopping,calf
+2026-09-19|hoops
+2026-09-23|bench:s=@80,pushdown,rows,pecdeck
+2026-09-26|milpress,revpecdeck,latraise:s=@5,squat,curls
+2026-09-30|bench:s=2@80;2@70,hexdl:n=up to 50kg,pecdeck,calf,rows,run:m=10
+2026-10-04|squat:s=3x10~n=up to 60kg,milpress,sapulldown,facepull,incline
+2026-10-07|bench:s=2@80;2@90,calf,rows,adduct,abduct
+2026-10-08|hexdl:n=up to 62.5kg,latraise:s=@6,pushdown,curls
+2026-10-10|squat:s=4x8@60,milpress,facepull
+2026-10-21|bench,rows,hexdl,facepull
+2026-10-24|squat:s=4x8@60,milpress,latraise
+2026-10-30|bench:n=up to 90kg,rows,pecdeck,adduct,abduct,facepull
+2026-10-31|squat:s=4x8~n=up to 70kg,latraise:s=@6,hexdl:n=up to 60kg,abs
+2026-11-04|sapulldown,milpress,curls,chestpress
+2026-11-10|legpress,hamcurl,hipthrust,abs
+2026-11-12|squat:s=4x8~n=60kg + 70kg,facepull,hexdl:s=4x8@50,abduct,adduct,calf
+2026-11-13|bench:s=@70;@80;@80;@85,latpull,curls,incdbrow,pecdeck
+2026-11-18|bench:s=@80;@85;@85;@90,shrug:s=3x10@10,pecdeck,rows,pushdown
+2026-11-19|squat:s=@60;@70;@70;@70,calf,hexdl:s=4x8@64,abduct,adduct
+`;
+const SEED_EVENTS = [
+  { id:'e1', name:'Arm injury?',    start:'2026-06-06', end:null },
+  { id:'e2', name:'Food poisoning', start:'2026-10-11', end:null },
+  { id:'e3', name:'Tricep strain',  start:'2026-11-10', end:null }
+];
+
+function parseSetSpec(spec) {
+  const out = [];
+  for (const grp of spec.split(';')) {
+    const m = grp.trim().match(/^(\d+)?(?:x(\d+))?(?:@([\d.]+))?$/);
+    if (!m) continue;
+    const n = m[1] ? +m[1] : 1, reps = m[2] ? +m[2] : null, w = m[3] ? +m[3] : null;
+    for (let i = 0; i < n; i++) out.push([w, reps]);
+  }
+  return out;
+}
+function buildSeedLog() {
+  const log = {};
+  for (const line of HISTORY.trim().split('\n')) {
+    const [date, body] = line.split('|');
+    body.split(',').forEach((tok, idx) => {
+      const [id, params] = tok.split(':');
+      const e = { d: date, i: idx };
+      if (params) for (const p of params.split('~')) {
+        const i = p.indexOf('='), k = p.slice(0,i), v = p.slice(i+1);
+        if (k==='s') e.s = parseSetSpec(v); else if (k==='n') e.n = v;
+        else if (k==='o') e.o = +v; else if (k==='c') e.c = +v; else if (k==='m') e.m = +v;
+      }
+      (log[id] = log[id] || []).push(e);
+    });
+  }
+  for (const k in log) log[k].sort((a,b) => a.d < b.d ? -1 : 1);
+  return log;
+}
+function freshState() {
+  return {
+    regions: SEED_REGIONS.map(([id,name]) => ({id,name})),
+    muscles: SEED_MUSCLES.map(([id,name,regionId]) => ({id,name,regionId})),
+    exercises: SEED_EXERCISES.map(([id,name,muscles,kind]) => ({id,name,muscles,kind:kind||'strength',
+      ...(['bench','squat','hexdl'].includes(id)?{pinned:true}:{})})),
+    events: SEED_EVENTS.slice(),
+    log: buildSeedLog()
+  };
+}
+
+/* ======================= STORAGE ======================= */
+const Store = {
+  async get() {
+    try { const v = localStorage.getItem(KEY); if (v) return v; } catch(e) {}
+    try { if (window.storage) { const r = await window.storage.get(KEY); if (r && r.value) return r.value; } } catch(e) {}
+    return null;
+  },
+  async set(v) {
+    let ok = false;
+    try { localStorage.setItem(KEY, v); ok = true; } catch(e) {}
+    try { if (window.storage) { await window.storage.set(KEY, v); ok = true; } } catch(e) {}
+    return ok;
+  }
+};
+
+/* ============================ GitHub sync ============================
+   localStorage is the working store; a JSON file in a private repo is the
+   source of truth. Pull on open, debounced push after any change. The token
+   lives in its own localStorage key and is never part of the synced data. */
+const SYNC_KEY = 'strength-log-sync';
+let sync = { owner:'', repo:'', path:'log.json', branch:'main', token:'' };
+let syncState = { status:'off', msg:'Not connected', sha:null, busy:false, again:false };
+let pushTimer = null;
+
+function loadSync(){
+  try { const v = localStorage.getItem(SYNC_KEY); if (v) Object.assign(sync, JSON.parse(v)); } catch(e){}
+}
+function saveSync(){
+  try { localStorage.setItem(SYNC_KEY, JSON.stringify(sync)); } catch(e){}
+}
+const syncReady = () => !!(sync.owner && sync.repo && sync.path && sync.token);
+
+function b64encode(str){
+  const bytes = new TextEncoder().encode(str);
+  let bin=''; for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+function b64decode(b64){
+  const bin = atob(String(b64).replace(/\s/g,''));
+  return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+}
+function setSync(status, msg){
+  syncState.status = status; syncState.msg = msg;
+  const el = document.getElementById('syncchip');
+  if (el) el.innerHTML = syncChipHTML();
+  const panel = document.getElementById('syncstatus');
+  if (panel) panel.innerHTML = `<b>${esc(statusWord())}</b>${esc(msg)}`;
+}
+function statusWord(){
+  return { off:'Not connected', ok:'Synced', syncing:'Working', error:'Problem' }[syncState.status] || '';
+}
+function syncChipHTML(){
+  if (syncState.status === 'off') return '';
+  const c = syncState.status==='ok' ? 'var(--fresh)'
+          : syncState.status==='error' ? 'var(--stale)' : 'var(--aging)';
+  return `<span style="color:${c}">●</span> ${esc(syncState.msg)}`;
+}
+
+async function ghFetch(method, body){
+  const path = sync.path.split('/').map(encodeURIComponent).join('/');
+  const base = `https://api.github.com/repos/${encodeURIComponent(sync.owner)}/${encodeURIComponent(sync.repo)}/contents/${path}`;
+  const url = method==='GET' ? `${base}?ref=${encodeURIComponent(sync.branch||'main')}&_=${Date.now()}` : base;
+  return fetch(url, {
+    method, cache:'no-store',
+    headers: Object.assign({
+      'Authorization': 'Bearer ' + sync.token,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    }, body ? {'Content-Type':'application/json'} : {}),
+    body: body ? JSON.stringify(body) : undefined
+  });
+}
+function ghError(code){
+  if (code===401) return 'Token rejected';
+  if (code===403) return 'Token lacks Contents write';
+  if (code===404) return 'Repo or path not found';
+  return 'GitHub error ' + code;
+}
+function normalize(d){
+  if (!d.events) d.events = [];
+  ensureColors(d);
+  return d;
+}
+
+async function pullRemote(){
+  if (!syncReady()) { setSync('off','Not connected'); return; }
+  setSync('syncing','Checking…');
+  let res;
+  try { res = await ghFetch('GET'); }
+  catch(e){ setSync('error', navigator.onLine === false ? 'Offline' : 'No connection'); return; }
+
+  if (res.status === 404) {                 // first run: nothing in the repo yet
+    syncState.sha = null;
+    setSync('syncing','Creating file…');
+    await pushNow();
+    return;
+  }
+  if (!res.ok) { setSync('error', ghError(res.status)); return; }
+
+  let remote;
+  try { const j = await res.json(); syncState.sha = j.sha; remote = JSON.parse(b64decode(j.content)); }
+  catch(e){ setSync('error','File is not valid JSON'); return; }
+
+  const rT = remote.updatedAt || 0, lT = (state && state.updatedAt) || 0;
+  if (rT > lT) {
+    state = normalize(remote);
+    await Store.set(JSON.stringify(state));
+    setSync('ok','Loaded from GitHub');
+    render();
+  } else if (lT > rT) {
+    setSync('syncing','Local is newer…');
+    await pushNow();
+  } else {
+    setSync('ok','Up to date');
+  }
+}
+
+async function pushNow(){
+  if (!syncReady() || !state) return;
+  if (syncState.busy) { syncState.again = true; return; }
+  syncState.busy = true;
+  setSync('syncing','Saving…');
+  try {
+    const body = {
+      message: 'Strength log — ' + new Date().toISOString(),
+      content: b64encode(JSON.stringify(state, null, 2)),
+      branch: sync.branch || 'main'
+    };
+    if (syncState.sha) body.sha = syncState.sha;
+    let res = await ghFetch('PUT', body);
+    if (res.status === 409 || res.status === 422) {   // someone else wrote first
+      const g = await ghFetch('GET');
+      if (g.ok) { const j = await g.json(); syncState.sha = j.sha; body.sha = j.sha; res = await ghFetch('PUT', body); }
+    }
+    if (res.ok) { const j = await res.json(); syncState.sha = j.content.sha; setSync('ok','Saved'); }
+    else setSync('error', ghError(res.status));
+  } catch(e) {
+    setSync('error', navigator.onLine === false ? 'Offline — will retry' : 'No connection');
+  }
+  syncState.busy = false;
+  if (syncState.again) { syncState.again = false; pushNow(); }
+}
+function schedulePush(){
+  if (!syncReady()) return;
+  clearTimeout(pushTimer);
+  setSync('syncing','Pending…');
+  pushTimer = setTimeout(pushNow, 2000);     // batch rapid taps into one commit
+}
+async function saveSyncSettings(){
+  sync.owner  = document.getElementById('s-owner').value.trim();
+  sync.repo   = document.getElementById('s-repo').value.trim();
+  sync.path   = document.getElementById('s-path').value.trim() || 'log.json';
+  sync.branch = document.getElementById('s-branch').value.trim() || 'main';
+  const t = document.getElementById('s-token').value.trim();
+  if (t) sync.token = t;
+  saveSync(); syncState.sha = null;
+  render();
+  await pullRemote();
+}
+function disconnectSync(){
+  if (!confirm('Disconnect from GitHub? Your data stays on this device.')) return;
+  sync = { owner:'', repo:'', path:'log.json', branch:'main', token:'' };
+  saveSync(); syncState = { status:'off', msg:'Not connected', sha:null, busy:false, again:false };
+  render();
+}
+
+const REGION_COLORS = { 'Chest':'#2F5D8C', 'Shoulders':'#A33A32', 'Upper back':'#6B4C8A',
+  'Core':'#1F6F7A', 'Arms':'#B5651D', 'Legs':'#B38A1D', 'Cardio & activity':'#5A6670' };
+const PALETTE = ['#2F5D8C','#A33A32','#B38A1D','#6B4C8A','#B5651D','#1F6F7A',
+                 '#3F7A4A','#5A6670','#9B4A6B','#7A5A3C'];
+function ensureColors(data){
+  let changed=false;
+  data.regions.forEach((r,i)=>{ if(!r.color){ r.color = REGION_COLORS[r.name] || PALETTE[i%PALETTE.length]; changed=true; } });
+  return changed;
+}
+function regionColor(rid){ const r=state.regions.find(x=>x.id===rid); return (r&&r.color)||'#5A6670'; }
+function muscleColor(mid){ const m=muscle(mid); return regionColor(m?m.regionId:null); }
+function exColor(ex){ return muscleColor(primaryOf(ex)); }
+async function setRegionColor(rid,hex){ state.regions.find(r=>r.id===rid).color=hex; await commit(); }
+
+let state=null, view='hist', openEdit=null, ready=false, saveWarned=false;
+let modal=null, draft=null, pickQuery='';
+let filters = { region:'', muscle:'', ex:'', evt:'' };
+
+async function load() {
+  loadSync();
+  let data=null; const raw = await Store.get();
+  if (raw) { try { data = JSON.parse(raw); } catch(e) { data=null; } }
+  if (!data || !Array.isArray(data.regions)) {
+    data = freshState();
+    data.updatedAt = 0;              // a seed must never outrank a real remote file
+    await Store.set(JSON.stringify(data));
+  }
+  state = normalize(data);
+  ready = true;
+  setSync(syncReady() ? 'syncing' : 'off', syncReady() ? 'Checking…' : 'Not connected');
+  render();
+  if (syncReady()) pullRemote();
+}
+async function save(d) {
+  const obj = d || state;
+  if (obj) obj.updatedAt = Date.now();
+  const ok = await Store.set(JSON.stringify(obj));
+  if (!ok && !saveWarned) saveWarned = true;
+  schedulePush();
+  return ok;
+}
+async function commit() { render(); await save(); }
+
+/* ======================= HELPERS ======================= */
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid = p => p + Date.now().toString(36) + Math.floor(Math.random()*900+100);
+function today(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function daysBetween(iso){ const [y,m,d]=iso.split('-').map(Number); const n=new Date();
+  return Math.round((new Date(n.getFullYear(),n.getMonth(),n.getDate())-new Date(y,m-1,d))/86400000); }
+function prettyDate(iso){ const [y,m,d]=iso.split('-').map(Number);
+  return new Date(y,m-1,d).toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'}); }
+
+const muscle = id => state.muscles.find(m=>m.id===id);
+const musclesIn = rid => state.muscles.filter(m=>m.regionId===rid);
+const exById = id => state.exercises.find(e=>e.id===id);
+const primaryOf = ex => ex.muscles[0];
+const exercisesUnder = mid => state.exercises.filter(e=>primaryOf(e)===mid);
+const exercisesTouching = mid => state.exercises.filter(e=>e.muscles.includes(mid));
+const entries = id => state.log[id] || [];
+const lastEntry = id => { const a = entries(id); return a.length ? a[a.length-1] : null; };
+const entryOn = (id,d) => entries(id).find(e=>e.d===d) || null;
+const regionOfEx = ex => { const m = muscle(primaryOf(ex)); return m ? m.regionId : null; };
+
+function lastForMuscle(mid){ let b=null; for (const ex of exercisesTouching(mid)){ const e=lastEntry(ex.id); if(e&&(!b||e.d>b)) b=e.d; } return b; }
+function lastForRegion(rid){ let b=null; for (const m of musclesIn(rid)){ const d=lastForMuscle(m.id); if(d&&(!b||d>b)) b=d; } return b; }
+function tone(n){ if(n===null) return 'var(--muted)'; if(n<=4) return 'var(--fresh)'; if(n<=9) return 'var(--aging)'; return 'var(--stale)'; }
+function rollup(iso,big){ const n=iso?daysBetween(iso):null;
+  return `<span class="rollup ${big?'big':''}" style="color:${tone(n)}">${iso===null?'Never':n===0?'Today':n+'d ago'}</span>`; }
+function bigDays(iso){
+  if(!iso) return `<span class="days word" style="color:var(--muted)">Never</span>`;
+  const n=daysBetween(iso);
+  if(n===0) return `<span class="days word" style="color:${tone(0)}">Today</span>`;
+  return `<span class="days" style="color:${tone(n)}">${n}<small>d</small></span>`;
+}
+function smallDays(iso){
+  if(!iso) return `<span class="d" style="color:var(--muted)">Never</span>`;
+  const n=daysBetween(iso);
+  return `<span class="d" style="color:${tone(n)}">${n===0?'Today':n+'d ago'}</span>`;
+}
+function setsSummary(s){
+  if(!s||!s.length) return '';
+  const grp=[];
+  for(const [w,r] of s){ const l=grp[grp.length-1];
+    if(l && l.w===w && l.r===r) l.n++; else grp.push({w,r,n:1}); }
+  return grp.map(g=>{
+    let t = g.r ? g.n+'×'+g.r : g.n+(g.n===1?' set':' sets');
+    if(g.w!=null) t += ' @ '+g.w+'kg';
+    return t;
+  }).join(', ');
+}
+function entrySummary(ex,e){
+  if(!e) return '';
+  const b=[];
+  if(ex.kind==='cardio'){
+    if(e.o!=null) b.push(e.o+' out'); if(e.c!=null) b.push(e.c+' cal'); if(e.m!=null) b.push(e.m+' min');
+  } else { const s=setsSummary(e.s); if(s) b.push(s); }
+  if(e.n) b.push(e.n);
+  return b.join(' · ');
+}
+/* Weight buttons: a per-exercise ladder. ex.weights overrides, set in Edit.
+   Heavy compounds get 50–120kg; everything else 5–60kg. */
+const HEAVY = /squat|bench press|deadlift/i;
+function ladder(from, to, step) { const a=[]; for (let v=from; v<=to; v+=step) a.push(v); return a; }
+function defaultWeights(ex) {
+  if (!HEAVY.test(ex.name)) return ladder(5,60,5);
+  /* hex bar sits 4kg above the standard ladder */
+  const offset = /hex/i.test(ex.name) ? 4 : 0;
+  return ladder(50,120,5).map(w => w + offset);
+}
+function suggestWeights(id) {
+  const ex = exById(id);
+  if (ex && Array.isArray(ex.weights) && ex.weights.length) return ex.weights;
+  return defaultWeights(ex);
+}
+const REPS_DEFAULT = [5,6,7,8,10,12,15,20];
+/* Pinned exercises sort to the top of every exercise list. */
+function sortPinned(list){ return list.slice().sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)); }
+const pinnedExercises = () => state.exercises.filter(e=>e.pinned);
+async function togglePin(id){ const ex=exById(id); ex.pinned = ex.pinned ? undefined : true;
+  if(!ex.pinned) delete ex.pinned; await save(); render(); }
+const SETS_DEFAULT = [1,2,3,4,5];
+function suggestReps(){ return REPS_DEFAULT; }
+
+/* ======================= MODAL ======================= */
+/* position within a day, so a session reads back in the order it was logged */
+function nextOrderOn(d){
+  let max = -1;
+  for (const ex of state.exercises)
+    for (const e of entries(ex.id))
+      if (e.d === d && (e.i ?? 0) > max) max = e.i ?? 0;
+  return max + 1;
+}
+function openDetail(exId, date, isNew) {
+  const ex = exById(exId);
+  const d = date || today();
+  let e = entryOn(exId, d);
+  if (!e && isNew !== false) { e = { d, i: nextOrderOn(d) }; (state.log[exId]=state.log[exId]||[]).push(e); state.log[exId].sort((a,b)=>a.d<b.d?-1:1); save(); }
+  if (!e) return;
+  const s = e.s || [];
+  draft = { ws: s.map(x=>x[0]).filter(v=>v!=null), rs: s.map(x=>x[1]).filter(v=>v!=null),
+            sets: s.length||null,
+            note: e.n||'', o: e.o??'', c: e.c??'', m: e.m??'', date: d, origDate: d };
+  modal = { kind:'detail', exId };
+  render();
+}
+function openPick() { pickQuery=''; modal={kind:'pick', region:null}; render(); }
+function closeModal() { modal=null; draft=null; render(); }
+
+/* Weight and reps are ordered sequences: each tap adds the next set's value.
+   Fewer values than sets means the last one carries forward. */
+function seqAdd(f,v){
+  const cap = draft.sets || 0;
+  /* already filled every set? start the sequence over at this value */
+  if (cap && draft[f].length >= cap) draft[f] = [v]; else draft[f].push(v);
+  renderModal();
+}
+function seqUndo(f){ draft[f].pop(); renderModal(); }
+function seqClear(f){ draft[f]=[]; renderModal(); }
+function seqManual(f,raw){
+  const v=parseFloat(raw); const a=draft[f];
+  if(isNaN(v)){ if(a.length) a.pop(); } else if(a.length) a[a.length-1]=v; else a.push(v);
+  updatePreview();
+}
+function nudge(d){
+  const a=draft.ws;
+  if(a.length) a[a.length-1]=Math.max(0,a[a.length-1]+d); else a.push(Math.max(0,d));
+  renderModal();
+}
+function toggleSets(v){ draft.sets = (draft.sets===v)?null:v; renderModal(); }
+function resolveSets(){
+  const n = draft.sets || Math.max(draft.ws.length, draft.rs.length, 0);
+  if(!n) return [];
+  const at=(a,i)=> a.length ? a[Math.min(i,a.length-1)] : null;
+  const out=[]; for(let i=0;i<n;i++) out.push([at(draft.ws,i), at(draft.rs,i)]);
+  return out;
+}
+function previewHTML(){
+  const r=resolveSets();
+  return r.length
+    ? `<b>This entry</b>${esc(setsSummary(r))}`
+    : `<b>This entry</b>Logged with no sets recorded`;
+}
+function updatePreview(){
+  const el=document.getElementById('seqline'); if(!el) return;
+  el.className = 'seqline' + (resolveSets().length?'':' none');
+  el.innerHTML = previewHTML();
+}
+
+async function saveDetail(exId) {
+  const ex = exById(exId);
+  const arr = state.log[exId] || [];
+  let e = arr.find(x => x.d === draft.origDate);
+  if (!e) { e = { d: draft.origDate }; arr.push(e); state.log[exId] = arr; }
+  if (e.d !== draft.date) e.i = nextOrderOn(draft.date);
+  e.d = draft.date;
+  if (ex.kind === 'cardio') {
+    const g = k => { const el=document.getElementById('d-'+k); const v=parseFloat(el?el.value:''); return isNaN(v)?undefined:v; };
+    const o=g('o'), c=g('c'), m=g('m');
+    if(o===undefined) delete e.o; else e.o=o;
+    if(c===undefined) delete e.c; else e.c=c;
+    if(m===undefined) delete e.m; else e.m=m;
+  } else {
+    const resolved = resolveSets();
+    if(resolved.length) e.s = resolved; else delete e.s;
+  }
+  const note = (draft.note||'').trim();
+  if(note) e.n = note; else delete e.n;
+  state.log[exId].sort((a,b)=>a.d<b.d?-1:1);
+  modal=null; draft=null; await commit();
+}
+async function deleteEntry(exId, date) {
+  if(!confirm('Delete this entry?')) return;
+  state.log[exId] = entries(exId).filter(e=>e.d!==date);
+  if(!state.log[exId].length) delete state.log[exId];
+  modal=null; draft=null; await commit();
+}
+
+function seqPills(field, vals) {
+  const a = draft[field];
+  return vals.map(v => {
+    const n = a.filter(x => x === v).length;
+    return `<button class="pill ${n?'on':''}" onclick="seqAdd('${field}',${v})">${v}${n>1?`<sup>×${n}</sup>`:''}</button>`;
+  }).join('');
+}
+function setPills(vals) {
+  return vals.map(v => `<button class="pill ${draft.sets===v?'on':''}" onclick="toggleSets(${v})">${v}</button>`).join('');
+}
+function modalHTML() {
+  if (!modal) return '';
+  if (modal.kind === 'event') return eventSheetHTML();
+  if (modal.kind === 'newex') return newExSheetHTML();
+  if (modal.kind === 'pick' || modal.kind === 'filter') {
+    const isEvt = modal.region === EVT;
+    const r = (modal.region && !isEvt) ? state.regions.find(x=>x.id===modal.region) : null;
+    const title = modal.kind==='filter' ? 'Filter' : 'Add entry';
+    const head = isEvt ? 'Events' : (r ? r.name : title);
+    const sub = isEvt ? 'Pick an event' : (r ? 'Pick an exercise' : 'Pick a muscle group');
+    return `<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="sheet">
+      <div class="sheethead"><div><h4>${esc(head)}</h4><span class="sub">${sub}</span></div>
+        ${modal.region ? `<button class="pill" onclick="pickRegion(null)">← Back</button>` : ''}</div>
+      <input type="search" placeholder="Or search any exercise" value="${esc(pickQuery)}"
+        oninput="pickQuery=this.value;refreshPick()" autocomplete="off">
+      <div class="picklist" id="picklist">${pickBodyHTML()}</div>
+      <div class="btnrow stick"><button class="btn ghost" onclick="closeModal()">Cancel</button></div>
+    </div></div>`;
+  }
+  const ex = exById(modal.exId);
+  const m = muscle(primaryOf(ex));
+  const reg = m ? state.regions.find(r=>r.id===m.regionId) : null;
+  let h = `<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="sheet">
+    <div class="sheethead"><div><h4>${esc(ex.name)}</h4>
+      <span class="sub"><i class="dot" style="background:${exColor(ex)}"></i>${esc(reg?reg.name:'')}${m?' · '+esc(m.name):''}</span></div>
+      <button class="pinbtn ${ex.pinned?'on':''}" onclick="togglePin('${ex.id}')">${ex.pinned?'★ Pinned':'☆ Pin'}</button></div>
+    <p class="pk">Date</p>
+    <input type="date" value="${draft.date}" oninput="draft.date=this.value">`;
+  if (ex.kind === 'cardio') {
+    h += `<div class="fgrid" style="gap:6px">
+      <div><p class="pk">Output</p><input type="number" inputmode="decimal" id="d-o" value="${draft.o}" style="margin-bottom:9px"></div>
+      <div><p class="pk">Calories</p><input type="number" inputmode="decimal" id="d-c" value="${draft.c}" style="margin-bottom:9px"></div></div>
+      <p class="pk">Minutes</p><input type="number" inputmode="decimal" id="d-m" value="${draft.m}">`;
+  } else {
+    const lastW = draft.ws.length ? draft.ws[draft.ws.length-1] : '';
+    const lastR = draft.rs.length ? draft.rs[draft.rs.length-1] : '';
+    h += `<div class="pkrow"><p class="pk">Weight (kg)</p><div class="pkctl">
+        <button class="pill sm" onclick="nudge(-2.5)">−2.5</button>
+        <button class="pill sm" onclick="nudge(2.5)">+2.5</button>
+        <button class="pill sm" onclick="seqUndo('ws')" aria-label="Undo last weight">⌫</button>
+        <input class="num sm" type="number" inputmode="decimal" placeholder="kg" value="${lastW}" oninput="seqManual('ws',this.value)">
+      </div></div>
+      <div class="pills">${seqPills('ws', suggestWeights(ex.id))}</div>
+      <div class="pkrow"><p class="pk">Reps</p><div class="pkctl">
+        <button class="pill sm" onclick="seqUndo('rs')" aria-label="Undo last reps">⌫</button>
+        <input class="num sm" type="number" inputmode="numeric" placeholder="reps" value="${lastR}" oninput="seqManual('rs',this.value)">
+      </div></div>
+      <div class="pills">${seqPills('rs', suggestReps())}</div>
+      <div class="pkrow"><p class="pk">Sets</p><div class="pkctl">
+        <input class="num sm" type="number" inputmode="numeric" placeholder="sets" value="${draft.sets??''}"
+          oninput="draft.sets=parseInt(this.value)||null;updatePreview()">
+      </div></div>
+      <div class="pills">${setPills(SETS_DEFAULT)}</div>
+      <div class="seqline ${resolveSets().length?'':'none'}" id="seqline">${previewHTML()}</div>`;
+  }
+  h += `<p class="pk">Note</p>
+    <input type="text" value="${esc(draft.note)}" placeholder="optional — e.g. up to 62.5kg" oninput="draft.note=this.value">
+    <div class="btnrow stick">
+      <button class="btn" onclick="saveDetail('${ex.id}')">Save</button>
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn danger" onclick="deleteEntry('${ex.id}','${draft.origDate}')">Delete</button>
+    </div></div></div>`;
+  return h;
+}
+function exCellsHTML(list, action) {
+  const act = action || (id => `openDetail('${id}',null,true)`);
+  return `<div class="grid">` + sortPinned(list).map(ex => {
+    const last = lastEntry(ex.id);
+    const isToday = last && last.d === today();
+    return `<button class="cell tinted ${isToday?'done':''} ${ex.pinned?'pinned':''}"
+      style="border-left-color:${exColor(ex)}" onclick="${act(ex.id)}">
+      <span class="n">${ex.pinned?'<span class="pinmark">★</span>':''}${esc(ex.name)}</span>${smallDays(last?last.d:null)}</button>`;
+  }).join('') + `</div>`;
+}
+function pickBodyHTML() {
+  const filtering = modal.kind === 'filter';
+  const exAction = filtering ? (id => `applyFilter('ex','${id}')`) : null;
+  const q = pickQuery.trim().toLowerCase();
+  if (q) {
+    const list = state.exercises
+      .filter(ex => ex.name.toLowerCase().includes(q) || (muscle(primaryOf(ex))||{}).name.toLowerCase().includes(q));
+    if (list.length) return exCellsHTML(list, exAction);
+    return filtering ? `<div class="empty">No match.</div>`
+      : `<div class="empty">No match.</div><div class="grid"><button class="cell grp wide"
+           onclick="openNewEx(${JSON.stringify(pickQuery.trim()).replace(/"/g,'&quot;')})">
+           <span class="n">+ Create “${esc(pickQuery.trim())}”</span></button></div>`;
+  }
+  if (!modal.region) {
+    let h = '';
+    if (filtering) h += `<div class="grid"><button class="cell grp wide" onclick="applyFilter('all')">
+      <span class="n">Show everything</span></button></div>`;
+    if (filtering) {
+      h += `<div class="grid"><button class="cell grp wide" style="border-left-color:var(--stale)"
+        onclick="pickRegion('${EVT}')">
+        <span class="n" style="color:var(--stale)">Events</span>
+        <span class="d" style="color:var(--muted)">${state.events.length} logged</span></button></div>`;
+    } else {
+      h += `<div class="pinhead">Events</div><div class="grid">
+        <button class="cell wide" onclick="openEvent(null)"><span class="n">+ Add an event</span>
+          <span class="d" style="color:var(--muted)">Illness, injury, travel</span></button></div>`;
+    }
+    const pins = pinnedExercises();
+    if (pins.length) h += `<div class="pinhead">Pinned</div>${exCellsHTML(pins, exAction)}`;
+    h += `<div class="pinhead">${filtering?'Filter by group':'All groups'}</div><div class="grid">`
+      + state.regions.map(r => {
+        const subs = musclesIn(r.id);
+        const doneToday = subs.some(m=>exercisesUnder(m.id).some(ex=>entryOn(ex.id,today())));
+        return `<button class="cell grp ${doneToday?'done':''}" style="border-left-color:${r.color||'#5A6670'}"
+          onclick="pickRegion('${r.id}')">
+          <span class="n" style="color:${r.color||'#5A6670'}">${esc(r.name)}</span>${smallDays(lastForRegion(r.id))}</button>`;
+      }).join('') + `</div>`;
+    return h;
+  }
+  if (modal.region === EVT) {
+    const evs = state.events.slice().sort((a,b)=> b.start < a.start ? -1 : 1);
+    if (!evs.length) return `<div class="empty">No events logged yet.</div>`;
+    return `<div class="grid"><button class="cell grp wide sub" style="border-left-color:var(--stale)"
+        onclick="applyFilter('evt','all')"><span class="n" style="color:var(--stale)">All events</span>
+        <span class="d" style="color:var(--muted)">${evs.length} logged</span></button></div>`
+      + `<div class="grid">` + evs.map(ev=>`<button class="cell tinted" style="border-left-color:var(--stale)"
+          onclick="applyFilter('evt','${ev.id}')">
+          <span class="n">${esc(ev.name)}</span>
+          <span class="d" style="color:var(--muted)">${prettyDate(ev.start)}${ev.end?' – '+prettyDate(ev.end):''}</span>
+        </button>`).join('') + `</div>`;
+  }
+  const reg = state.regions.find(x=>x.id===modal.region);
+  let h = '';
+  if (!filtering) {
+    const firstM = musclesIn(modal.region)[0];
+    h += `<div class="grid"><button class="cell wide tinted" style="border-left-color:${regionColor(modal.region)}"
+      onclick="openNewEx('', '${firstM?firstM.id:''}')">
+      <span class="n">+ New exercise</span>
+      <span class="d" style="color:var(--muted)">Add one to ${esc(reg?reg.name:'')}</span></button></div>`;
+  }
+  if (filtering) h += `<div class="grid"><button class="cell grp wide" style="border-left-color:${regionColor(modal.region)}"
+    onclick="applyFilter('region','${modal.region}')">
+    <span class="n" style="color:${regionColor(modal.region)}">All of ${esc(reg?reg.name:'')}</span>${smallDays(lastForRegion(modal.region))}</button></div>`;
+  for (const m of musclesIn(modal.region)) {
+    const list = exercisesUnder(m.id);
+    const mc = muscleColor(m.id);
+    h += filtering
+      ? `<button class="cell wide tinted sub" style="margin-top:9px;border-left-color:${mc}" onclick="applyFilter('muscle','${m.id}')">
+           <span class="n" style="color:${mc}">All ${esc(m.name)}</span>${smallDays(lastForMuscle(m.id))}</button>`
+      : `<div class="muscle"><h3><i class="dot" style="background:${mc}"></i>${esc(m.name)}</h3>${rollup(lastForMuscle(m.id))}</div>`;
+    h += list.length ? exCellsHTML(list, exAction) : `<div class="noex">Nothing here yet.</div>`;
+  }
+  return h;
+}
+function applyFilter(kind, id) {
+  filters.region=''; filters.muscle=''; filters.ex=''; filters.evt='';
+  if (kind==='region') filters.region=id;
+  else if (kind==='muscle') filters.muscle=id;
+  else if (kind==='ex') filters.ex=id;
+  else if (kind==='evt') filters.evt=id;
+  modal=null; render(); window.scrollTo(0,0);
+}
+const EVT = '__events__';
+function openFilter(){ pickQuery=''; modal={kind:'filter', region:filters.region||null}; render(); }
+
+/* ---- create an exercise mid-flow ---- */
+function openNewEx(name, mid){
+  draft = { name: name||'', mid: mid || (state.muscles[0]&&state.muscles[0].id), kind:'strength' };
+  modal = { kind:'newex' };
+  render();
+}
+function muscleOptionsHTML(sel){
+  return state.regions.map(r=>`<optgroup label="${esc(r.name)}">${
+    musclesIn(r.id).map(m=>`<option value="${m.id}" ${m.id===sel?'selected':''}>${esc(m.name)}</option>`).join('')
+  }</optgroup>`).join('');
+}
+async function saveNewEx(){
+  const name=(draft.name||'').trim();
+  if(!name){ alert('Give the exercise a name.'); return; }
+  const id=uid('x');
+  state.exercises.push({ id, name, muscles:[draft.mid], kind:draft.kind });
+  await save();
+  openDetail(id, null, true);           // straight into logging it
+}
+function newExSheetHTML(){
+  const m=muscle(draft.mid); const reg=m?state.regions.find(r=>r.id===m.regionId):null;
+  return `<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="sheet">
+    <div class="sheethead"><div><h4>New exercise</h4>
+      <span class="sub"><i class="dot" style="background:${muscleColor(draft.mid)}"></i>${
+        esc(reg?reg.name:'')}${m?' · '+esc(m.name):''}</span></div></div>
+    <p class="pk">Name</p>
+    <input type="text" value="${esc(draft.name)}" placeholder="e.g. Incline dumbbell press"
+      oninput="draft.name=this.value">
+    <p class="pk">Files under</p>
+    <select onchange="draft.mid=this.value;renderModal()">${muscleOptionsHTML(draft.mid)}</select>
+    <p class="pk">Type</p>
+    <select onchange="draft.kind=this.value">
+      <option value="strength" ${draft.kind==='strength'?'selected':''}>Strength (sets/reps/weight)</option>
+      <option value="cardio" ${draft.kind==='cardio'?'selected':''}>Cardio (output/calories/minutes)</option>
+    </select>
+    <div class="btnrow stick">
+      <button class="btn" onclick="saveNewEx()">Create and log</button>
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+    </div></div></div>`;
+}
+
+/* ---- events ---- */
+function openEvent(id){
+  const ev = id ? state.events.find(e=>e.id===id) : null;
+  draft = { name: ev?ev.name:'', start: ev?ev.start:today(), end: ev&&ev.end?ev.end:'' };
+  modal = { kind:'event', id: id||null };
+  render();
+}
+function pastEventNames(){
+  const seen=[]; for(const e of state.events) if(!seen.includes(e.name)) seen.push(e.name);
+  return seen.slice(-6);
+}
+async function saveEventModal(){
+  const name=(draft.name||'').trim(); if(!name){ alert('Give the event a name.'); return; }
+  if(modal.id){ const ev=state.events.find(e=>e.id===modal.id);
+    ev.name=name; ev.start=draft.start; ev.end=draft.end||null; }
+  else state.events.push({id:uid('e'),name,start:draft.start,end:draft.end||null});
+  modal=null; draft=null; await commit();
+}
+async function deleteEventModal(){
+  if(!confirm('Delete this event?')) return;
+  state.events=state.events.filter(e=>e.id!==modal.id);
+  modal=null; draft=null; await commit();
+}
+function eventSheetHTML(){
+  const names=pastEventNames();
+  return `<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="sheet">
+    <div class="sheethead"><div><h4>${modal.id?'Edit event':'Add event'}</h4>
+      <span class="sub">Illness, injury, travel …</span></div></div>
+    <p class="pk">Name</p>
+    <input type="text" value="${esc(draft.name)}" placeholder="e.g. Food poisoning"
+      oninput="draft.name=this.value">
+    ${names.length?`<p class="pk">Used before</p><div class="pills">${
+      names.map(n=>`<button class="pill" onclick="draft.name=${JSON.stringify(n).replace(/"/g,'&quot;')};renderModal()">${esc(n)}</button>`).join('')
+    }</div>`:''}
+    <p class="pk">Start</p>
+    <input type="date" value="${draft.start}" oninput="draft.start=this.value">
+    <p class="pk">End — leave blank for a one-off</p>
+    <input type="date" value="${draft.end}" oninput="draft.end=this.value">
+    <div class="btnrow stick">
+      <button class="btn" onclick="saveEventModal()">Save</button>
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      ${modal.id?`<button class="btn danger" onclick="deleteEventModal()">Delete</button>`:''}
+    </div></div></div>`;
+}
+function filterDot(){
+  let c=null;
+  if (filters.ex){ const e=exById(filters.ex); if(e) c=exColor(e); }
+  else if (filters.muscle) c=muscleColor(filters.muscle);
+  else if (filters.region) c=regionColor(filters.region);
+  return c ? `<i class="dot" style="background:${c}"></i>` : '';
+}
+function filterLabel(){
+  if (filters.evt) { if (filters.evt==='all') return 'All events';
+    const e=state.events.find(x=>x.id===filters.evt); return e?e.name:'All events'; }
+  if (filters.ex) { const e=exById(filters.ex); return e?e.name:'All exercises'; }
+  if (filters.muscle) { const m=muscle(filters.muscle); return m?m.name:'All exercises'; }
+  if (filters.region) { const r=state.regions.find(x=>x.id===filters.region); return r?r.name:'All exercises'; }
+  return 'All exercises';
+}
+function pickRegion(rid) { modal.region = rid; refreshPick(); }
+function refreshPick() {
+  const el = document.getElementById('picklist');
+  if (el) el.innerHTML = pickBodyHTML();
+  const head = document.querySelector('.sheethead');
+  if (head && modal && (modal.kind === 'pick' || modal.kind === 'filter')) {
+    const isEvt = modal.region === EVT;
+    const r = (modal.region && !isEvt) ? state.regions.find(x=>x.id===modal.region) : null;
+    const head2 = isEvt ? 'Events' : (r ? r.name : (modal.kind==='filter'?'Filter':'Add entry'));
+    const sub2 = pickQuery.trim() ? 'Search results'
+      : (isEvt ? 'Pick an event' : (r ? 'Pick an exercise' : 'Pick a muscle group'));
+    head.innerHTML = `<div><h4>${esc(head2)}</h4><span class="sub">${sub2}</span></div>
+      ${modal.region ? `<button class="pill" onclick="pickRegion(null)">← Back</button>` : ''}`;
+  }
+}
+function renderModal() { document.getElementById('modal').innerHTML = modalHTML(); }
+
+/* ======================= VIEWS ======================= */
+function matchesFilter(ex, e) {
+  if (filters.ex && ex.id !== filters.ex) return false;
+  if (filters.muscle && !ex.muscles.includes(filters.muscle)) return false;
+  if (filters.region) {
+    const ok = ex.muscles.some(mid => { const m = muscle(mid); return m && m.regionId === filters.region; });
+    if (!ok) return false;
+  }
+  return true;
+}
+function clearFilters() { filters = { region:'', muscle:'', ex:'', evt:'' }; render(); }
+
+function histListHTML() {
+  const evFilter = filters.evt;
+  const exFilter = filters.region || filters.muscle || filters.ex;
+  const byDate = {};
+
+  if (!evFilter) {
+    for (const ex of state.exercises)
+      for (const e of entries(ex.id))
+        if (matchesFilter(ex,e)) (byDate[e.d] = byDate[e.d] || []).push({ex,e});
+  }
+  /* events keep their own days, unless an exercise filter is narrowing the view */
+  const shownEvents = evFilter
+    ? state.events.filter(ev => evFilter==='all' || ev.id===evFilter)
+    : (exFilter ? [] : state.events);
+  for (const ev of shownEvents) byDate[ev.start] = byDate[ev.start] || [];
+
+  const dates = Object.keys(byDate).sort().reverse();
+  if (!dates.length) return `<div class="empty">Nothing matches.</div>`;
+  let h = '';
+  for (const d of dates) {
+    const items = byDate[d].sort((a,b) => (a.e.i ?? 0) - (b.e.i ?? 0));
+    const evs = shownEvents.filter(ev => ev.end ? (d>=ev.start && d<=ev.end) : ev.start===d);
+    const n = items.length + evs.length;
+    h += `<div class="day"><h3>${prettyDate(d)} <span class="count">· ${n} item${n===1?'':'s'}</span></h3>`;
+    h += evs.map(ev => `<button class="evt" onclick="openEvent('${ev.id}')">
+      <b>${esc(ev.name)}</b>${ev.end?`<span>${prettyDate(ev.start)} – ${prettyDate(ev.end)}</span>`:''}</button>`).join('');
+    for (const {ex,e} of items) {
+      const sum = entrySummary(ex,e);
+      h += `<button class="hitem" style="border-left-color:${exColor(ex)}" onclick="openDetail('${ex.id}','${d}',false)">
+        <span><span class="hn">${esc(ex.name)}</span>${sum?`<span class="hd">${esc(sum)}</span>`:''}</span>
+        <span class="hc">›</span></button>`;
+    }
+    h += `</div>`;
+  }
+  return h;
+}
+function viewHistory() {
+  let h = '';
+  if (saveWarned) h += `<div class="warn">Storage is unavailable here, so changes will be lost on reload.</div>`;
+  h += `<div class="filters">
+    <button class="addbtn" onclick="openPick()">+ Add entry</button>
+    <button class="filterbtn ${(filters.region||filters.muscle||filters.ex||filters.evt)?'on':''}" onclick="openFilter()">
+      <span class="fl">Showing</span><span class="fv">${filterDot()}${esc(filterLabel())}</span></button>
+    ${(filters.region||filters.muscle||filters.ex||filters.evt)?`<button class="clearf" onclick="clearFilters()">Clear filter</button>`:''}
+  </div>
+  <div id="histlist">${histListHTML()}</div>`;
+  return h;
+}
+
+
+
+/* ---- structure editing ---- */
+function expand(id){ openEdit = (openEdit===id)?null:id; render(); }
+async function saveRegion(rid){ const n=document.getElementById('f-name').value.trim(); if(!n) return;
+  state.regions.find(r=>r.id===rid).name=n; openEdit=null; await commit(); }
+async function deleteRegion(rid){ const ms=musclesIn(rid), mids=ms.map(m=>m.id);
+  const exs=state.exercises.filter(e=>mids.includes(primaryOf(e)));
+  if(!confirm(`Delete this group, ${ms.length} muscle(s) and ${exs.length} exercise(s) with their history?`)) return;
+  exs.forEach(e=>delete state.log[e.id]);
+  state.exercises=state.exercises.filter(e=>!mids.includes(primaryOf(e)));
+  state.exercises.forEach(e=>e.muscles=e.muscles.filter(m=>!mids.includes(m)));
+  state.muscles=state.muscles.filter(m=>m.regionId!==rid);
+  state.regions=state.regions.filter(r=>r.id!==rid); openEdit=null; await commit(); }
+async function addRegion(){ const n=document.getElementById('new-region').value.trim(); if(!n) return;
+  state.regions.push({id:uid('r'),name:n}); await commit(); }
+async function saveMuscle(mid){ const n=document.getElementById('f-name').value.trim();
+  const r=document.getElementById('f-region').value; if(!n) return;
+  const m=muscle(mid); m.name=n; m.regionId=r; openEdit=null; await commit(); }
+async function deleteMuscle(mid){ const exs=exercisesUnder(mid);
+  if(!confirm(`Delete this muscle and ${exs.length} exercise(s) with their history?`)) return;
+  exs.forEach(e=>delete state.log[e.id]);
+  state.exercises=state.exercises.filter(e=>primaryOf(e)!==mid);
+  state.exercises.forEach(e=>e.muscles=e.muscles.filter(x=>x!==mid));
+  state.muscles=state.muscles.filter(m=>m.id!==mid); openEdit=null; await commit(); }
+async function addMuscle(){ const n=document.getElementById('new-muscle').value.trim();
+  const r=document.getElementById('new-muscle-region').value; if(!n) return;
+  state.muscles.push({id:uid('m'),name:n,regionId:r}); await commit(); }
+async function saveExercise(id){ const n=document.getElementById('f-name').value.trim(); if(!n) return;
+  const ex=exById(id); const p=document.getElementById('f-primary').value;
+  const also=Array.from(document.querySelectorAll('.f-also:checked')).map(c=>c.value).filter(v=>v!==p);
+  ex.name=n; ex.muscles=[p,...also]; ex.kind=document.getElementById('f-kind').value;
+  const wRaw=(document.getElementById('f-weights').value||'').trim();
+  const ws=wRaw.split(/[^0-9.]+/).map(parseFloat).filter(v=>!isNaN(v)&&v>0);
+  if(ws.length) ex.weights=Array.from(new Set(ws)).sort((a,b)=>a-b); else delete ex.weights;
+  if(document.getElementById('f-pinned').checked) ex.pinned=true; else delete ex.pinned;
+  openEdit=null; await commit(); }
+async function deleteExercise(id){ const ex=exById(id);
+  if(!confirm(`Delete ${ex.name} and its history?`)) return;
+  state.exercises=state.exercises.filter(e=>e.id!==id); delete state.log[id]; openEdit=null; await commit(); }
+async function addExercise(){ const n=document.getElementById('new-ex').value.trim();
+  const m=document.getElementById('new-ex-muscle').value, k=document.getElementById('new-ex-kind').value;
+  if(!n) return; state.exercises.push({id:uid('x'),name:n,muscles:[m],kind:k}); await commit(); }
+async function addEvent(){ const n=document.getElementById('ev-name').value.trim();
+  const s=document.getElementById('ev-start').value; if(!n||!s) return;
+  state.events.push({id:uid('e'),name:n,start:s,end:document.getElementById('ev-end').value||null}); await commit(); }
+async function deleteEvent(id){ const ev=state.events.find(e=>e.id===id);
+  if(!confirm(`Delete event "${ev.name}"?`)) return;
+  state.events=state.events.filter(e=>e.id!==id); await commit(); }
+function exportData(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='strength-log-'+today()+'.json'; document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+}
+async function importData(){
+  const t=document.getElementById('importbox').value.trim(); if(!t) return;
+  let d; try{ d=JSON.parse(t); }catch(e){ alert('That is not valid JSON.'); return; }
+  if(!d.regions||!d.exercises){ alert('That does not look like a Strength Log export.'); return; }
+  if(!confirm('Replace everything currently in the app with this file?')) return;
+  state=d; if(!state.events) state.events=[]; openEdit=null; await commit();
+}
+
+function viewEdit() {
+  const regionOpts = sel => state.regions.map(r=>`<option value="${r.id}" ${r.id===sel?'selected':''}>${esc(r.name)}</option>`).join('');
+  const muscleOpts = sel => state.regions.map(r=>`<optgroup label="${esc(r.name)}">${musclesIn(r.id).map(m=>`<option value="${m.id}" ${m.id===sel?'selected':''}>${esc(m.name)}</option>`).join('')}</optgroup>`).join('');
+  const kindOpts = sel => ['strength','cardio'].map(k=>`<option value="${k}" ${k===sel?'selected':''}>${k==='strength'?'Strength (sets/reps/weight)':'Cardio (output/calories/minutes)'}</option>`).join('');
+  let h = `<div class="sectionhead">GitHub sync</div>
+    <div class="syncbox" id="syncstatus"><b>${esc(statusWord())}</b>${esc(syncState.msg)}</div>
+    <div class="add">
+      <label>Repo owner (your GitHub username)</label>
+      <input type="text" id="s-owner" value="${esc(sync.owner)}" placeholder="e.g. michael" autocapitalize="off" autocorrect="off">
+      <label>Repo name (make it private)</label>
+      <input type="text" id="s-repo" value="${esc(sync.repo)}" placeholder="e.g. strength-data" autocapitalize="off" autocorrect="off">
+      <label>File path</label>
+      <input type="text" id="s-path" value="${esc(sync.path)}" placeholder="log.json" autocapitalize="off" autocorrect="off">
+      <label>Branch</label>
+      <input type="text" id="s-branch" value="${esc(sync.branch)}" placeholder="main" autocapitalize="off" autocorrect="off">
+      <label>Access token ${sync.token?'— saved, leave blank to keep':''}</label>
+      <input type="password" id="s-token" value="" placeholder="${sync.token?'•••••••• saved':'github_pat_…'}" autocapitalize="off" autocorrect="off">
+      <div class="btnrow"><button class="btn" onclick="saveSyncSettings()">Save and connect</button></div>
+      <div class="btnrow" style="margin-top:7px">
+        <button class="btn ghost" onclick="pullRemote()">Pull now</button>
+        <button class="btn ghost" onclick="pushNow()">Push now</button>
+        ${syncReady()?`<button class="btn danger" onclick="disconnectSync()">Disconnect</button>`:''}
+      </div>
+      <p class="helptext" style="margin-top:12px">
+        On GitHub: <b style="letter-spacing:0;text-transform:none;font-size:12px;color:var(--ink)">Settings → Developer settings → Personal access tokens → Fine-grained tokens</b>.
+        Give it access to this one repository only, and under Repository permissions set
+        <code>Contents</code> to <code>Read and write</code>. Paste the token above — it stays on this
+        phone and is never written into the synced file.
+      </p>
+    </div>
+
+    <div class="sectionhead">Events</div>`;
+  for (const ev of state.events.slice().sort((a,b)=>b.start<a.start?-1:1))
+    h += `<div class="editrow"><span>${esc(ev.name)}<br><span class="chev">${prettyDate(ev.start)}${ev.end?' – '+prettyDate(ev.end):''}</span></span>
+      <button class="pill" onclick="deleteEvent('${ev.id}')">Delete</button></div>`;
+  h += `<div class="add"><label for="ev-name">New event</label><input type="text" id="ev-name" placeholder="e.g. Food poisoning">
+    <label for="ev-start">Start</label><input type="date" id="ev-start" value="${today()}">
+    <label for="ev-end">End (blank for a one-off)</label><input type="date" id="ev-end">
+    <button class="btn" onclick="addEvent()">Add event</button></div>`;
+
+  h += `<div class="sectionhead">Exercises</div>`;
+  for (const r of state.regions) for (const m of musclesIn(r.id)) {
+    const list = exercisesUnder(m.id); if (!list.length) continue;
+    h += `<div class="subhead">${esc(r.name)} · ${esc(m.name)}</div>`;
+    for (const ex of sortPinned(list)) {
+      h += `<div class="editrow" onclick="expand('${ex.id}')"><span>${ex.pinned?'<span class="pinmark">★</span>':''}${esc(ex.name)}</span><span class="chev">${openEdit===ex.id?'Close':'Edit'}</span></div>`;
+      if (openEdit===ex.id) h += `<div class="panel">
+        <label>Name</label><input type="text" id="f-name" value="${esc(ex.name)}">
+        <label>Files under</label><select id="f-primary">${muscleOpts(primaryOf(ex))}</select>
+        <label>Type</label><select id="f-kind">${kindOpts(ex.kind||'strength')}</select>
+        <label>Weight buttons (kg, comma separated — blank uses the default ladder)</label>
+        <input type="text" id="f-weights" inputmode="decimal"
+          value="${ex.weights&&ex.weights.length?ex.weights.join(', '):''}"
+          placeholder="${defaultWeights(ex).join(', ')}">
+        <label>Visibility</label><div class="checks">
+          <label class="chk"><input type="checkbox" id="f-pinned" ${ex.pinned?'checked':''}>Pin to top of lists</label></div>
+        <label>Also works</label><div class="checks">${state.muscles.map(mm=>
+          `<label class="chk"><input type="checkbox" class="f-also" value="${mm.id}" ${ex.muscles.includes(mm.id)&&mm.id!==primaryOf(ex)?'checked':''}>${esc(mm.name)}</label>`).join('')}</div>
+        <div class="btnrow"><button class="btn" onclick="saveExercise('${ex.id}')">Save</button>
+        <button class="btn danger" onclick="deleteExercise('${ex.id}')">Delete</button></div></div>`;
+    }
+  }
+  h += `<div class="add"><label>New exercise</label><input type="text" id="new-ex" placeholder="e.g. Incline dumbbell press">
+    <label>Files under</label><select id="new-ex-muscle">${muscleOpts()}</select>
+    <label>Type</label><select id="new-ex-kind">${kindOpts('strength')}</select>
+    <button class="btn" onclick="addExercise()">Add exercise</button></div>`;
+
+  h += `<div class="sectionhead">Muscles</div>`;
+  for (const r of state.regions) {
+    h += `<div class="subhead">${esc(r.name)}</div>`;
+    for (const m of musclesIn(r.id)) {
+      h += `<div class="editrow" onclick="expand('${m.id}')"><span><i class="dot" style="background:${muscleColor(m.id)}"></i>${esc(m.name)}</span><span class="chev">${openEdit===m.id?'Close':'Edit'}</span></div>`;
+      if (openEdit===m.id) h += `<div class="panel">
+        <label>Name</label><input type="text" id="f-name" value="${esc(m.name)}">
+        <label>Group</label><select id="f-region">${regionOpts(m.regionId)}</select>
+        <div class="btnrow"><button class="btn" onclick="saveMuscle('${m.id}')">Save</button>
+        <button class="btn danger" onclick="deleteMuscle('${m.id}')">Delete</button></div></div>`;
+    }
+  }
+  h += `<div class="add"><label>New muscle</label><input type="text" id="new-muscle" placeholder="e.g. Serratus">
+    <label>Group</label><select id="new-muscle-region">${regionOpts()}</select>
+    <button class="btn" onclick="addMuscle()">Add muscle</button></div>`;
+
+  h += `<div class="sectionhead">Groups</div>`;
+  for (const r of state.regions) {
+    h += `<div class="editrow" onclick="expand('${r.id}')"><span><i class="dot" style="background:${r.color||'#5A6670'}"></i>${esc(r.name)}</span><span class="chev">${openEdit===r.id?'Close':'Edit'}</span></div>`;
+    if (openEdit===r.id) h += `<div class="panel"><label>Name</label><input type="text" id="f-name" value="${esc(r.name)}">
+      <label>Colour</label><div class="swatches">${PALETTE.map(c=>
+        `<button class="sw ${r.color===c?'on':''}" style="background:${c}" onclick="setRegionColor('${r.id}','${c}')" aria-label="${c}"></button>`).join('')}</div>
+      <div class="btnrow"><button class="btn" onclick="saveRegion('${r.id}')">Save</button>
+      <button class="btn danger" onclick="deleteRegion('${r.id}')">Delete</button></div></div>`;
+  }
+  h += `<div class="add"><label>New group</label><input type="text" id="new-region" placeholder="e.g. Grip">
+    <button class="btn" onclick="addRegion()">Add group</button></div>`;
+
+  h += `<div class="sectionhead">Backup</div><div class="add">
+    <button class="btn" onclick="exportData()">Export to a file</button>
+    <p class="note" style="margin:10px 0 8px">Downloads everything as JSON. Take a copy before moving the app to a new address.</p>
+    <label>Paste an export to restore</label><textarea id="importbox" placeholder='{"regions": …'></textarea>
+    <button class="btn ghost" onclick="importData()">Import and replace</button></div>`;
+  return h;
+}
+
+function setView(v) {
+  view=v; openEdit=null; modal=null; draft=null;
+  [['tab-hist','hist'],['tab-edit','edit']]
+    .forEach(([i,k])=>document.getElementById(i).setAttribute('aria-selected',k===v?'true':'false'));
+  render(); window.scrollTo(0,0);
+}
+function render() {
+  if (!ready) return;
+  document.getElementById('stamp').textContent =
+    new Date().toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'});
+  const chip = document.getElementById('syncchip');
+  if (chip) chip.innerHTML = syncChipHTML();
+  document.getElementById('app').innerHTML =
+    view==='hist'?viewHistory():viewEdit();
+  renderModal();
+}
+/* retry when the connection or the app comes back */
+window.addEventListener('online', () => { if (ready && syncReady()) pullRemote(); });
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && ready && syncReady() && syncState.status !== 'syncing') pullRemote();
+});
+
+load();
+</script>
