@@ -271,7 +271,7 @@
 <div id="modal"></div>
 
 <script>
-const KEY = 'strength-log-v5';
+const KEY = 'strength-log-v6';
 
 /* ======================= SEED ======================= */
 const SEED_REGIONS = [
@@ -333,146 +333,14 @@ const SEED_EXERCISES = [
   ['hopping','Hopping (ankle physio)',['m-rehab'],'cardio']
 ];
 
-const HISTORY = `
-2026-02-26|peloton:o=246~c=334
-2026-03-07|peloton:o=245~c=332
-2026-03-09|peloton:c=326
-2026-03-14|peloton:o=214~c=290
-2026-03-21|peloton:o=230~c=312
-2026-03-31|peloton:o=233~c=316
-2026-04-03|peloton:o=215~c=292
-2026-04-10|peloton:o=242~c=328
-2026-04-17|peloton:o=229~c=310
-2026-04-23|peloton:o=252~c=342
-2026-04-28|peloton:o=232~c=315
-2026-05-05|peloton:o=229~c=311
-2026-05-08|peloton:o=258~c=350
-2026-05-09|incline,abs,ytraise,dbrow
-2026-05-11|milpress,skull,curls,latraise,peloton:o=244~c=330
-2026-05-12|bench,legext,pecdeck,hamcurl,abduct,adduct,facepull
-2026-05-14|abs,peloton:o=264~c=357
-2026-05-15|milpress,rows,incline
-2026-05-16|peloton:m=30
-2026-05-18|abs,latraise,pushdown,curls
-2026-05-19|bench,legext,abduct,adduct,pecdeck,facepull
-2026-05-22|abs,peloton:o=247~c=335
-2026-05-23|incline,dbrow,peloton:o=229~c=310
-2026-05-25|abs,peloton:m=5
-2026-05-26|bench,legext,pecdeck,abduct,adduct,facepull
-2026-05-29|abs,legext,abduct,hamcurl
-2026-06-02|bench,rows,pecdeck,facepull
-2026-06-05|peloton:o=258~c=349
-2026-06-06|abs,incline,skull,latraise,curls
-2026-06-07|peloton:o=247~c=335
-2026-06-10|legext,adduct,hamcurl,rows,pushdown
-2026-06-11|abs,peloton:o=266~c=360
-2026-06-12|peloton:o=267~c=361
-2026-06-15|chestpress,adduct,abduct,legext,hamcurl,pushdown,rows
-2026-06-16|peloton:o=269~c=364
-2026-06-18|milpress,pushdown,curls,pecdeck
-2026-06-22|peloton:o=267~c=362
-2026-06-26|bench,legext,milpress,adduct,latraise:n=light,hamcurl,rows
-2026-06-27|abs,peloton:o=253~c=343
-2026-06-28|incline,pecdeck,latpull,pushdown,facepull:n=light,curls
-2026-06-29|peloton:o=269~c=364
-2026-07-01|chestpress,legext,milpress,facepull,adduct,rows
-2026-07-02|peloton:o=243~c=329
-2026-07-06|peloton:o=269~c=364
-2026-07-07|peloton:c=366
-2026-07-08|chestpress,rows,milpress,facepull
-2026-07-11|incline:n=light,curls,pushdown,latraise,dbrow
-2026-07-13|legext,adduct,hamcurl,latpull
-2026-07-15|abs,peloton:c=371
-2026-07-16|chestpress,rows,milpress,facepull,pecdeck
-2026-07-18|pushdown,pullup
-2026-07-19|bike:m=20,chestpress,curls,latraise,facepull
-2026-07-23|milpress,rows,bike:m=20
-2026-07-24|abs
-2026-07-26|chestpress,latraise,crosstrainer:m=10
-2026-07-27|peloton:c=366
-2026-08-01|latpull,sapulldown,rows,curls,pushdown
-2026-08-02|chestpress,legpress,milpress,adduct,abduct,latraise,facepull
-2026-08-08|bench:s=@60,chestpress,legpress,pecdeck,calf,milpress,rows
-2026-08-09|peloton:m=20
-2026-08-12|latraise:s=@6,skull,facepull,sapulldown,hamcurl,curls
-2026-08-15|bench:s=@60,curls,legpress,latpull,pecdeck,abs
-2026-08-16|milpress,pushdown,facepull,adduct,abduct,chestpress,rows
-2026-08-19|incline,latraise,legraise,hamcurl,abs
-2026-08-22|calf,skull,curls,peloton:c=361
-2026-08-23|chestpress,rows,milpress,adduct,abduct,facepull
-2026-08-29|curls,pushdown,latraise,run
-2026-08-30|bench:s=@70~n=narrow grip,rows,milpress,pullthrough,kickback,facepull
-2026-08-31|run
-2026-09-02|run,sapulldown
-2026-09-06|hoops,abs:n=glutes?
-2026-09-07|run
-2026-09-08|hopping
-2026-09-10|bench,facepull,run
-2026-09-12|hoops
-2026-09-13|milpress,hexdl:s=3x12@45,rows,calf,pecdeck
-2026-09-14|run
-2026-09-16|hopping,calf
-2026-09-19|hoops
-2026-09-23|bench:s=@80,pushdown,rows,pecdeck
-2026-09-26|milpress,revpecdeck,latraise:s=@5,squat,curls
-2026-09-30|bench:s=2@80;2@70,hexdl:n=up to 50kg,pecdeck,calf,rows,run:m=10
-2026-10-04|squat:s=3x10~n=up to 60kg,milpress,sapulldown,facepull,incline
-2026-10-07|bench:s=2@80;2@90,calf,rows,adduct,abduct
-2026-10-08|hexdl:n=up to 62.5kg,latraise:s=@6,pushdown,curls
-2026-10-10|squat:s=4x8@60,milpress,facepull
-2026-10-21|bench,rows,hexdl,facepull
-2026-10-24|squat:s=4x8@60,milpress,latraise
-2026-10-30|bench:n=up to 90kg,rows,pecdeck,adduct,abduct,facepull
-2026-10-31|squat:s=4x8~n=up to 70kg,latraise:s=@6,hexdl:n=up to 60kg,abs
-2026-11-04|sapulldown,milpress,curls,chestpress
-2026-11-10|legpress,hamcurl,hipthrust,abs
-2026-11-12|squat:s=4x8~n=60kg + 70kg,facepull,hexdl:s=4x8@50,abduct,adduct,calf
-2026-11-13|bench:s=@70;@80;@80;@85,latpull,curls,incdbrow,pecdeck
-2026-11-18|bench:s=@80;@85;@85;@90,shrug:s=3x10@10,pecdeck,rows,pushdown
-2026-11-19|squat:s=@60;@70;@70;@70,calf,hexdl:s=4x8@64,abduct,adduct
-`;
-const SEED_EVENTS = [
-  { id:'e1', name:'Arm injury?',    start:'2026-06-06', end:null },
-  { id:'e2', name:'Food poisoning', start:'2026-10-11', end:null },
-  { id:'e3', name:'Tricep strain',  start:'2026-11-10', end:null }
-];
-
-function parseSetSpec(spec) {
-  const out = [];
-  for (const grp of spec.split(';')) {
-    const m = grp.trim().match(/^(\d+)?(?:x(\d+))?(?:@([\d.]+))?$/);
-    if (!m) continue;
-    const n = m[1] ? +m[1] : 1, reps = m[2] ? +m[2] : null, w = m[3] ? +m[3] : null;
-    for (let i = 0; i < n; i++) out.push([w, reps]);
-  }
-  return out;
-}
-function buildSeedLog() {
-  const log = {};
-  for (const line of HISTORY.trim().split('\n')) {
-    const [date, body] = line.split('|');
-    body.split(',').forEach((tok, idx) => {
-      const [id, params] = tok.split(':');
-      const e = { d: date, i: idx };
-      if (params) for (const p of params.split('~')) {
-        const i = p.indexOf('='), k = p.slice(0,i), v = p.slice(i+1);
-        if (k==='s') e.s = parseSetSpec(v); else if (k==='n') e.n = v;
-        else if (k==='o') e.o = +v; else if (k==='c') e.c = +v; else if (k==='m') e.m = +v;
-      }
-      (log[id] = log[id] || []).push(e);
-    });
-  }
-  for (const k in log) log[k].sort((a,b) => a.d < b.d ? -1 : 1);
-  return log;
-}
 function freshState() {
   return {
     regions: SEED_REGIONS.map(([id,name]) => ({id,name})),
     muscles: SEED_MUSCLES.map(([id,name,regionId]) => ({id,name,regionId})),
     exercises: SEED_EXERCISES.map(([id,name,muscles,kind]) => ({id,name,muscles,kind:kind||'strength',
       ...(['bench','squat','hexdl'].includes(id)?{pinned:true}:{})})),
-    events: SEED_EVENTS.slice(),
-    log: buildSeedLog()
+    events: [],
+    log: {}
   };
 }
 
@@ -569,6 +437,7 @@ async function pullRemote(){
 
   if (res.status === 404) {                 // first run: nothing in the repo yet
     syncState.sha = null;
+    if (!state) { state = normalize(freshState()); await Store.set(JSON.stringify(state)); render(); }
     setSync('syncing','Creating file…');
     await pushNow();
     return;
@@ -664,12 +533,7 @@ async function load() {
   loadSync();
   let data=null; const raw = await Store.get();
   if (raw) { try { data = JSON.parse(raw); } catch(e) { data=null; } }
-  if (!data || !Array.isArray(data.regions)) {
-    data = freshState();
-    data.updatedAt = 0;              // a seed must never outrank a real remote file
-    await Store.set(JSON.stringify(data));
-  }
-  state = normalize(data);
+  state = (data && Array.isArray(data.regions)) ? normalize(data) : null;
   ready = true;
   setSync(syncReady() ? 'syncing' : 'off', syncReady() ? 'Checking…' : 'Not connected');
   render();
@@ -1193,6 +1057,26 @@ function histListHTML() {
   }
   return h;
 }
+function viewEmpty(){
+  return `<div class="empty" style="padding:44px 12px;line-height:1.65">
+    <b style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:17px;letter-spacing:.1em;
+      text-transform:uppercase;color:var(--ink);margin-bottom:9px">No data on this device</b>
+    ${syncReady()
+      ? 'Loading your log from GitHub…'
+      : 'This device isn’t connected yet. Your log lives in GitHub — connect to pull it down.'}
+    <div style="max-width:250px;margin:20px auto 0">
+      ${syncReady() ? `<button class="btn ghost" onclick="pullRemote()">Try again</button>`
+                    : `<button class="btn" onclick="setView('edit')">Connect to GitHub</button>`}
+      <button class="btn ghost" style="margin-top:7px" onclick="startFresh()">Start a new log here</button>
+    </div></div>`;
+}
+async function startFresh(){
+  if (!confirm('Start a brand-new empty log on this device?' + (syncReady()
+    ? '\n\nThis device is connected, so it will also be pushed to GitHub and replace what is there.' : ''))) return;
+  state = normalize(freshState());
+  await commit();
+}
+
 function viewHistory() {
   let h = '';
   if (saveWarned) h += `<div class="warn">Storage is unavailable here, so changes will be lost on reload.</div>`;
@@ -1269,11 +1153,7 @@ async function importData(){
   state=d; if(!state.events) state.events=[]; openEdit=null; await commit();
 }
 
-function viewEdit() {
-  const regionOpts = sel => state.regions.map(r=>`<option value="${r.id}" ${r.id===sel?'selected':''}>${esc(r.name)}</option>`).join('');
-  const muscleOpts = sel => state.regions.map(r=>`<optgroup label="${esc(r.name)}">${musclesIn(r.id).map(m=>`<option value="${m.id}" ${m.id===sel?'selected':''}>${esc(m.name)}</option>`).join('')}</optgroup>`).join('');
-  const kindOpts = sel => ['strength','cardio'].map(k=>`<option value="${k}" ${k===sel?'selected':''}>${k==='strength'?'Strength (sets/reps/weight)':'Cardio (output/calories/minutes)'}</option>`).join('');
-  let h = `<div class="sectionhead">GitHub sync</div>
+function syncSectionHTML(){ return `<div class="sectionhead">GitHub sync</div>
     <div class="syncbox" id="syncstatus"><b>${esc(statusWord())}</b>${esc(syncState.msg)}</div>
     <div class="add">
       <label>Repo owner (your GitHub username)</label>
@@ -1298,9 +1178,16 @@ function viewEdit() {
         <code>Contents</code> to <code>Read and write</code>. Paste the token above — it stays on this
         phone and is never written into the synced file.
       </p>
-    </div>
+    </div>`;
+}
 
-    <div class="sectionhead">Events</div>`;
+function viewEdit() {
+  let h = syncSectionHTML();
+  if (!state) return h + `<p class="note">Everything else appears once a log is loaded.</p>`;
+  const regionOpts = sel => state.regions.map(r=>`<option value="${r.id}" ${r.id===sel?'selected':''}>${esc(r.name)}</option>`).join('');
+  const muscleOpts = sel => state.regions.map(r=>`<optgroup label="${esc(r.name)}">${musclesIn(r.id).map(m=>`<option value="${m.id}" ${m.id===sel?'selected':''}>${esc(m.name)}</option>`).join('')}</optgroup>`).join('');
+  const kindOpts = sel => ['strength','cardio'].map(k=>`<option value="${k}" ${k===sel?'selected':''}>${k==='strength'?'Strength (sets/reps/weight)':'Cardio (output/calories/minutes)'}</option>`).join('');
+  h += `<div class="sectionhead">Events</div>`;
   for (const ev of state.events.slice().sort((a,b)=>b.start<a.start?-1:1))
     h += `<div class="editrow"><span>${esc(ev.name)}<br><span class="chev">${prettyDate(ev.start)}${ev.end?' – '+prettyDate(ev.end):''}</span></span>
       <button class="pill" onclick="deleteEvent('${ev.id}')">Delete</button></div>`;
@@ -1385,7 +1272,7 @@ function render() {
   const chip = document.getElementById('syncchip');
   if (chip) chip.innerHTML = syncChipHTML();
   document.getElementById('app').innerHTML =
-    view==='hist'?viewHistory():viewEdit();
+    view==='hist' ? (state ? viewHistory() : viewEmpty()) : viewEdit();
   renderModal();
 }
 /* retry when the connection or the app comes back */
